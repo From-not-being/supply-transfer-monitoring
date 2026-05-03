@@ -2,4 +2,7 @@
 
 ° checks supply speed,
 loss of packages 
-and sends a recommendation to change processing
+
+° then sends a recommendation to change processing
+
+° numpy, tensorflow
