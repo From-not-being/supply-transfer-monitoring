@@ -1,23 +1,35 @@
-# Login Anomaly Detector
+# Supply and Transfer Monitoring
 
-# creates a csv of each login with email address, time and date and activity and alerts if it is very different from previous sessions
+# checks supply speed, loss of packages and sends a recommendation to change processing
 
 import numpy as np
-import pandas as pd
-from sklearn.ensemble import IsolationForest
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, LSTM
 
-# 1. Daten-Simulation (HENNGE One Access Logs)
-# Merkmale: [Stunde (0-23), Anzahl_Fehlversuche, IP_Risiko_Score (1-10)]
-normal_logins = np.random.normal(loc=[14, 0, 1], scale=[3, 0.5, 0.5], size=(100, 3))
-attack_logins = [[3, 15, 9], [4, 12, 8], [2, 20, 10]] # Nachts, viele Versuche, hohe Risiko-IP
+# 1. Daten-Simulation (Warenstrom im Lagerhaus)
+# Wir simulieren eine Sinus-Welle (Tagesrhythmus der Pakete)
+time = np.linspace(0, 100, 1000)
+packages = np.sin(time) + np.random.normal(0, 0.1, 1000)
 
-X = np.vstack([normal_logins, attack_logins])
+# Daten für LSTM vorbereiten (Fenster-Ansatz)
+def create_sequences(data, window=10):
+    X, y = [], []
+    for i in range(len(data)-window):
+        X.append(data[i:i+window])
+        y.append(data[i+window])
+    return np.array(X), np.array(y)
 
-# 2. Modell-Setup (Isolation Forest findet Ausreißer ohne Training auf Labels)
-model = IsolationForest(contamination=0.03, random_state=42)
-model.fit(X)
+X, y = create_sequences(packages)
+X = X.reshape((X.shape[0], X.shape[1], 1))
 
-# 3. Vorhersage (-1 bedeutet Anomalie/Angriff)
-predictions = model.predict(X)
+# 2. Modell-Setup (Deep Learning für Zeitreihen)
+model = Sequential([
+    LSTM(50, activation='relu', input_shape=(10, 1)),
+    Dense(1)
+])
+model.compile(optimizer='sgd', loss='mse')
 
-print(f"Gefundene Anomalien an den letzten Positionen: {predictions[-3:]}")
+# 3. Training (In Colab schnell erledigt)
+model.fit(X, y, epochs=5, verbose=0)
+print("Modell für Mujin-Durchsatzvorhersage ist bereit.")
